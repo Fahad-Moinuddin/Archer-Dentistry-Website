@@ -16,32 +16,36 @@ import {
 } from 'lucide-react';
 import { LOCATIONS, SERVICES, PRACTICE_INFO } from '../data/dentistryData';
 
+const getInitialFormData = (locationId, service) => ({
+  locationId: locationId || LOCATIONS[0].id,
+  service: service || 'Routine Checkup & Cleaning',
+  preferredDate: '',
+  timeWindow: 'Morning (8:00 AM – 12:00 PM)',
+  patientName: '',
+  phone: '',
+  email: '',
+  insuranceType: 'Dental PPO Insurance',
+  insuranceProvider: '',
+  notes: '',
+});
+
 export default function BookingModal({ isOpen, onClose, initialLocationId, initialService }) {
   const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({
-    locationId: initialLocationId || LOCATIONS[0].id,
-    service: initialService || 'Routine Checkup & Cleaning',
-    preferredDate: '',
-    timeWindow: 'Morning (8:00 AM – 12:00 PM)',
-    patientName: '',
-    phone: '',
-    email: '',
-    insuranceType: 'Dental PPO Insurance',
-    insuranceProvider: '',
-    notes: '',
-  });
+  const [formData, setFormData] = useState(() =>
+    getInitialFormData(initialLocationId, initialService)
+  );
 
   const [bookingRef, setBookingRef] = useState('');
   const [validationError, setValidationError] = useState('');
 
+  // Reset wizard whenever the modal opens so Continue/Confirm always show
   useEffect(() => {
-    if (initialLocationId) {
-      setFormData(prev => ({ ...prev, locationId: initialLocationId }));
-    }
-    if (initialService) {
-      setFormData(prev => ({ ...prev, service: initialService }));
-    }
-  }, [initialLocationId, initialService]);
+    if (!isOpen) return;
+    setStep(1);
+    setFormData(getInitialFormData(initialLocationId, initialService));
+    setBookingRef('');
+    setValidationError('');
+  }, [isOpen, initialLocationId, initialService]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -116,11 +120,11 @@ export default function BookingModal({ isOpen, onClose, initialLocationId, initi
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto overflow-x-hidden bg-slate-950/80 backdrop-blur-sm p-3 sm:p-6 flex flex-col items-center justify-start md:justify-center animate-fadeIn">
       <div 
-        className="my-auto relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden"
+        className="my-auto relative w-full max-w-2xl max-h-[min(100%,calc(100dvh-1.5rem))] sm:max-h-[calc(100dvh-3rem)] bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header Strip */}
-        <div className="bg-gradient-to-r from-brand-navy to-brand-navy-light text-white p-6 sm:p-7 relative border-b border-white/10">
+        <div className="flex-shrink-0 bg-gradient-to-r from-brand-navy to-brand-navy-light text-white p-6 sm:p-7 relative border-b border-white/10">
           <button
             onClick={onClose}
             className="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
@@ -159,8 +163,8 @@ export default function BookingModal({ isOpen, onClose, initialLocationId, initi
           )}
         </div>
 
-        {/* Content Body */}
-        <div className="p-6 sm:p-8 max-h-[70vh] overflow-y-auto">
+        {/* Content Body — scrolls; footer stays pinned */}
+        <div className="p-6 sm:p-8 flex-1 min-h-0 overflow-y-auto">
           {validationError && (
             <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -455,9 +459,9 @@ export default function BookingModal({ isOpen, onClose, initialLocationId, initi
 
         </div>
 
-        {/* Modal Footer Controls (Steps 1-4) */}
+        {/* Modal Footer Controls (Steps 1-4) — always visible below scroll area */}
         {step < 5 && (
-          <div className="p-4 sm:p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+          <div className="flex-shrink-0 p-4 sm:p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
             {step > 1 ? (
               <button
                 onClick={handlePrev}
